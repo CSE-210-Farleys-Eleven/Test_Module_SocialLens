@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.vite/
+*.log
+.DS_Store
+
+# Secrets and local config must never be committed
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+oauth-client-metadata.json
