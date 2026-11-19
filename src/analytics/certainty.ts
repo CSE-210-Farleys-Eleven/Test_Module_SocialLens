@@ -42,26 +42,29 @@ export function assessCoverage(snapshot: Snapshot, registry: RegistryData, colle
   if (collections.length === 0) {
     return { status: 'not-available', reason: 'No analysed collection can supply this value.', contributingApps };
   }
-  const problems: string[] = [];
+  // Each problem names its collection (by registry label), and identical sentences are not repeated.
+  const problems = new Set<string>();
+  const labelOf = (nsid: string): string => registry.collections.find((c) => c.nsid === nsid)?.label ?? nsid;
   let unavailable = 0;
-  for (const nsid of collections) {
+  for (const nsid of new Set(collections)) {
     const row = snapshot.coverage.find((c) => c.collection === nsid);
     if (row === undefined) {
       unavailable += 1;
-      problems.push(`${nsid} was not read.`);
+      problems.add(`${labelOf(nsid)}: not read.`);
     } else if (row.status === 'unavailable') {
       unavailable += 1;
-      problems.push(row.reason);
+      problems.add(`${labelOf(nsid)}: ${row.reason}`);
     } else if (row.status === 'partial') {
-      problems.push(row.reason);
+      problems.add(`${labelOf(nsid)}: ${row.reason}`);
     }
     const skipped = skippedCount(snapshot, nsid);
-    if (skipped > 0) problems.push(`${skipped} ${nsid} record${skipped === 1 ? ' was' : 's were'} skipped.`);
+    if (skipped > 0) problems.add(`${labelOf(nsid)}: ${skipped} record${skipped === 1 ? ' was' : 's were'} skipped.`);
   }
-  if (unavailable === collections.length) {
-    return { status: 'unknown', reason: problems.join(' '), contributingApps };
+  const reason = [...problems].join(' ');
+  if (unavailable === new Set(collections).size) {
+    return { status: 'unknown', reason, contributingApps };
   }
-  if (problems.length > 0) return { status: 'partial', reason: problems.join(' '), contributingApps };
+  if (problems.size > 0) return { status: 'partial', reason, contributingApps };
   return { status: 'exact', reason: null, contributingApps };
 }
 

@@ -23,6 +23,19 @@ describe('certainty (status of a value)', () => {
     expect(a.reason).toMatch(/page limit/);
   });
 
+  it('several incomplete collections → each reason names its collection by its registry label', () => {
+    const snap = makeSnapshot({ registry, coverage: { [NSID.like]: 'partial', [NSID.follow]: 'partial' } });
+    const a = assessCoverage(snap, registry, [NSID.post, NSID.like, NSID.follow]);
+    expect(a.status).toBe('partial');
+    // Found on a real account: identical sentences were concatenated with no hint of which collection each was about.
+    // The test registry uses the NSID as the label.
+    expect(a.reason).toContain(`${NSID.like}: `);
+    expect(a.reason).toContain(`${NSID.follow}: `);
+    expect(a.reason).not.toContain(`${NSID.post}: `);
+    const again = assessCoverage(snap, registry, [NSID.like, NSID.like]);
+    expect(again.reason?.split(`${NSID.like}: `).length).toBe(2);
+  });
+
   it('every collection unavailable → unknown; some → partial', () => {
     const snap = makeSnapshot({ registry, coverage: { [NSID.post]: 'unavailable', [NSID.document]: 'unavailable' } });
     expect(assessCoverage(snap, registry, [NSID.post, NSID.document]).status).toBe('unknown');
