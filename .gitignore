@@ -13,3 +13,6 @@ coverage/
 *.key
 credentials*.json
 oauth-client-metadata.json
+
+# Local tool config
+.claude/
